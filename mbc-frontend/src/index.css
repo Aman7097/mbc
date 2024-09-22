@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --main-gradient: radial-gradient(
+    circle,
+    rgba(35, 2, 62, 1) 18%,
+    rgba(26, 0, 50, 1) 43%,
+    rgba(19, 0, 52, 1) 75%
+  );
+  --main-bg: rgb(35, 2, 62);
+}
+
+textarea {
+}
