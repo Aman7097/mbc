@@ -16,7 +16,17 @@ const authCheck = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || "testsecret");
 
       // Get user from the token
-      req.user = await User.findById(decoded.id).select("-password");
+      const user = await User.findById(decoded.id).select("-password");
+
+      if (!user) {
+        // If no user is found, return an unauthorized error
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Attach user to request object
+      req.user = user;
+
+
 
       next();
     } catch (error) {
@@ -32,7 +42,7 @@ const authCheck = async (req, res, next) => {
 
 // Middleware for buyer role
 const buyerCheck = (req, res, next) => {
-  if (req.user.role !== "buyer") {
+  if (req.user.userType !== "buyer") {
     return res.status(403).json({ message: "Access restricted to buyers" });
   }
   next();
@@ -40,7 +50,7 @@ const buyerCheck = (req, res, next) => {
 
 // Middleware for seller role
 const sellerCheck = (req, res, next) => {
-  if (req.user.role !== "seller") {
+  if (req.user.userType !== "seller") {
     return res.status(403).json({ message: "Access restricted to sellers" });
   }
   next();
@@ -48,7 +58,7 @@ const sellerCheck = (req, res, next) => {
 
 // Middleware for admin role
 const adminCheck = (req, res, next) => {
-  if (req.user.role !== "admin") {
+  if (req.user.userType !== "admin") {
     return res.status(403).json({ message: "Access restricted to admins" });
   }
   next();

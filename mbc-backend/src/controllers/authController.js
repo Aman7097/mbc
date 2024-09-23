@@ -28,8 +28,7 @@ const generateToken = (user) => {
  */
 const formatUserResponse = (user) => ({
   id: user._id,
-  firstName: user.firstName,
-  lastName: user.lastName,
+  username: user.username,
   email: user.email,
 });
 
@@ -43,14 +42,14 @@ exports.register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { firstName, lastName, email, password } = req.body;
+    const { username, email, password, userType = "buyer" } = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    user = new User({ firstName, lastName, email, password });
+    user = new User({ username, email, password, userType });
     await user.save();
 
     const token = generateToken(user);
@@ -128,24 +127,17 @@ exports.logout = async (req, res) => {
  */
 exports.forgotPassword = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { email, password } = req.body;
-
+    const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(200).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(404).json({ message: "Email not found" });
     }
 
-    const token = generateToken(user);
+    // Generate a password reset token (this is a simplified version)
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    // Set reset token to the database (not shown here) and send an email with the token
 
-    res.json({
-      token,
-      user: formatUserResponse(user),
-    });
+    res.status(200).json({ message: "Reset link has been sent to your email.", resetToken });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
@@ -157,24 +149,15 @@ exports.forgotPassword = async (req, res) => {
  */
 exports.resetPassword = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const { token, newPassword } = req.body;
+    const user = await User.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
     }
 
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(200).json({ message: "Invalid credentials" });
-    }
-
-    const token = generateToken(user);
-
-    res.json({
-      token,
-      user: formatUserResponse(user),
-    });
+    user.password = newPassword; // Assume hashing occurs within model
+    await user.save();
+    res.status(200).json({ message: "Password has been reset successfully." });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
@@ -186,26 +169,11 @@ exports.resetPassword = async (req, res) => {
  */
 exports.getMyDetails = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(200).json({ message: "Invalid credentials" });
-    }
-
-    const token = generateToken(user);
-
-    res.json({
-      token,
-      user: formatUserResponse(user),
-    });
+    const user = req.user;
+    const formattedUser = formatUserResponse(user);
+    res.status(200).json({ user: formattedUser });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Error fetching user details:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

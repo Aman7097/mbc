@@ -17,7 +17,7 @@ const router = express.Router();
  * @desc    Get list of all products (Buyers can browse)
  * @access  Public
  */
-router.get("/products", buyerController.getAllProducts);
+router.post("/search-products", buyerController.searchProducts);
 
 /**
  * @route   GET /api/buyer/product/:id
@@ -43,10 +43,21 @@ router.post(
 );
 
 /**
- * @route   GET /api/buyer/orders
+ * @route   GET /api/buyer/all-orders
  * @desc    View all orders made by the logged-in buyer
  * @access  Private (Buyer only)
  */
-router.get("/orders", authCheck, buyerCheck, buyerController.getOrders);
+router.get("/all-orders", authCheck, buyerCheck, buyerController.getOrders);
 
+/**
+ * @route   GET /api/buyer/order/:id
+ * @desc    Get details of a specific order
+ * @access  Private (Buyer only)
+ */
+router.get(
+  "/order/:id",
+  authCheck,
+  buyerCheck,
+  buyerController.getOrderById
+);
 module.exports = router;

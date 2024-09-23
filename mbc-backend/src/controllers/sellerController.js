@@ -9,20 +9,39 @@ exports.addProduct = async (req, res) => {
   }
 
   try {
-    const { name, description, price, categoryId } = req.body;
+    const {
+      name,
+      description,
+      price,
+      categoryId,
+      reviews,
+      overallRating,
+      tags,
+      images,
+      productLink,
+      platformName,
+    } = req.body;
+
+    // Create a new Product object
     const newProduct = new Product({
       name,
       description,
       price,
-      category: categoryId,
+      categoryId,
       seller: req.user._id,
+      reviews: reviews || [],
+      overallRating,
+      tags: tags || [], // Optional tags field, default to empty array if not provided
+      images: images || [], // Optional images field, default to empty array if not provided
+      productLink, // Only include if platformName exists
+      platformName, // Optional field
     });
-
     await newProduct.save();
     res
       .status(201)
       .json({ message: "Product added successfully", product: newProduct });
   } catch (error) {
+    console.error("Error:", error);
     res.status(500).json({ error: "Failed to add product" });
   }
 };
@@ -108,5 +127,14 @@ exports.updateOrderStatus = async (req, res) => {
       .json({ message: "Order status updated successfully", order });
   } catch (error) {
     res.status(500).json({ error: "Failed to update order status" });
+  }
+};
+
+exports.getSellerProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ seller: req.user._id });
+    res.json({ products });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 };

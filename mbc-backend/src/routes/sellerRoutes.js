@@ -18,7 +18,7 @@ const router = express.Router();
  * @access  Private (Seller only)
  */
 router.post(
-  "/product",
+  "/add-product",
   authCheck,
   sellerCheck,
   [
@@ -36,16 +36,9 @@ router.post(
  * @access  Private (Seller only)
  */
 router.put(
-  "/product/:id",
+  "/update-product/:id",
   authCheck,
   sellerCheck,
-  [
-    check("name", "Product name is required").optional().notEmpty(),
-    check("description", "Description is required").optional().notEmpty(),
-    check("price", "Price must be a positive number")
-      .optional()
-      .isFloat({ min: 0 }),
-  ],
   sellerController.updateProduct
 );
 
@@ -55,11 +48,15 @@ router.put(
  * @access  Private (Seller only)
  */
 router.delete(
-  "/product/:id",
+  "/delete-product/:id",
   authCheck,
   sellerCheck,
   sellerController.deleteProduct
 );
+
+
+router.get('/my-products', authCheck, sellerCheck, sellerController.getSellerProducts);
+
 
 /**
  * @route   GET /api/seller/orders

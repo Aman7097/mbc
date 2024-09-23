@@ -16,8 +16,7 @@ const router = express.Router();
  * Validation middleware for registration
  */
 const registerValidation = [
-  check("firstName", "First Name is required").notEmpty(),
-  check("lastName", "Last Name is required").notEmpty(),
+  check("username", "User Name is required").notEmpty(),
   check("email", "Please include a valid email").isEmail(),
   check("password", "Password must be at least 8 characters").isLength({
     min: 8,

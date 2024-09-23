@@ -2,6 +2,7 @@ const Category = require("../models/CategoryModel"); // Assume you have a Catego
 const User = require("../models/UserModel"); // Assume you have a User model
 
 exports.createCategory = async (req, res) => {
+
   try {
     const { name } = req.body;
     if (!name) {
@@ -15,31 +16,29 @@ exports.createCategory = async (req, res) => {
 };
 
 exports.addSeller = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ error: "Name, email, and password are required" });
-    }
-    const newSeller = await User.create({
-      name,
-      email,
-      password,
-      role: "seller",
-    });
+  const { username, email, password } = req.body;
 
-    res
-      .status(201)
-      .json({ message: "Seller added successfully", sellerId: newSeller._id });
+  try {
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(409).json({ message: 'User already exists' });
+    }
+
+    user = new User({ username, email, password, userType: 'seller' });
+
+    await user.save();
+
+    res.status(201).json({ message: 'Seller added successfully', user: { id: user._id, name: user.name, email: user.email } });
   } catch (error) {
-    res.status(500).json({ error: "Failed to add seller" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
+    const users = await User.find({ userType: { $ne: 'admin' } })
+      .select('-password -__v')
+      .lean();
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch users" });
@@ -47,14 +46,31 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.deleteUser = async (req, res) => {
+  const userId = req.params.id;
+
   try {
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    await User.findByIdAndDelete(userId);
-    res.status(200).json({ message: "User deleted successfully" });
+
+    res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  const categoryId = req.params.id;
+
+  try {
+    const category = await Category.findByIdAndDelete(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    res.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 };

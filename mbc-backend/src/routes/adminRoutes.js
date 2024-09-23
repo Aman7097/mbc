@@ -43,7 +43,7 @@ router.get("/all-users", authCheck, adminCheck, adminController.getAllUsers);
  * @access  Private (Admin)
  */
 router.delete(
-  "/delete-user",
+  "/delete-user/:id",
   authCheck,
   adminCheck,
   adminController.deleteUser
